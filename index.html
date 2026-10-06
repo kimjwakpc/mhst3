@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>즈3 몬스터 도감</title>
+<meta name="description" content="몬스터헌터 스토리즈3 동료몬 수치 도감 — 구글시트 데이터 기반">
+<meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16140f" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="즈3 도감">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>즈3 몬스터 도감</h1>
+    <button id="sourceBtn" class="source" type="button" title="데이터 다시 불러오기">불러오는 중…</button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="list" aria-selected="true">도감</button>
+    <button role="tab" data-tab="compare" aria-selected="false">비교 <span id="cmpCount" class="count" hidden></span></button>
+    <button role="tab" data-tab="ref" aria-selected="false">참고표</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 도감 -->
+  <section id="tab-list" class="tab">
+    <div class="controls">
+      <div class="search">
+        <input id="q" type="search" placeholder="이름 · S기술 · 패시브 · 부화기술 검색" autocomplete="off">
+      </div>
+      <div class="sortbar">
+        <label>정렬
+          <select id="sort">
+            <option value="no">순번</option>
+            <option value="rank">랭크</option>
+            <option value="total">등급 총합</option>
+            <option value="hp">체력</option>
+            <option value="atk">공격력</option>
+            <option value="def">방어력</option>
+            <option value="critT">회심률 (총합)</option>
+            <option value="spdT">스피드 (총합)</option>
+            <option value="stamT">초기 스테 (총합)</option>
+            <option value="recT">스테 회복 (총합)</option>
+            <option value="dragT">파룡력 (총합)</option>
+            <option value="name">이름</option>
+          </select>
+        </label>
+        <button id="dir" class="dir" type="button" aria-label="정렬 방향">↓ 높은순</button>
+        <button id="filterToggle" class="ghost" type="button" aria-expanded="false">필터 <span id="filterCount" class="count" hidden></span></button>
+      </div>
+      <div id="filters" class="filters" hidden></div>
+    </div>
+    <p id="resultInfo" class="result-info"></p>
+    <ul id="list" class="cards"></ul>
+  </section>
+
+  <!-- 비교 -->
+  <section id="tab-compare" class="tab" hidden>
+    <p class="hint">도감에서 몬스터를 열고 <b>비교에 추가</b>를 누르면 최대 4마리까지 나란히 볼 수 있습니다.</p>
+    <div id="compare"></div>
+  </section>
+
+  <!-- 참고표 -->
+  <section id="tab-ref" class="tab" hidden>
+    <div id="ref"></div>
+  </section>
+</main>
+
+<!-- 상세 시트 -->
+<div id="sheetBackdrop" class="backdrop" hidden></div>
+<aside id="sheet" class="sheet" hidden aria-modal="true" role="dialog"></aside>
+
+<footer class="foot">
+  데이터: <a id="srcLink" target="_blank" rel="noopener">즈3 몬스터 수치 (구글시트)</a>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
