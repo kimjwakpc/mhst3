@@ -6,6 +6,8 @@
 - 몬스터헌터 스토리즈3 동료몬 수치 도감. 순수 정적 사이트(HTML/CSS/JS, 빌드 없음).
 - GitHub Pages: main 브랜치 루트 → https://kimjwakpc.github.io/mhst3/
 - 주 사용 환경은 **폰**. 모든 UI 변경은 390px 폭에서 가로 스크롤 없는지 확인.
+- 작업 중 필요한 사이트(예: kimjwakpc.github.io)가 이 환경에서 막혀 있으면 "못 했다"로 끝내지 말고, 막힌 주소를 알려 주며 열어 달라고 요청할 것
+  (세션 상단 클라우드 환경 메뉴 → Edit → Network access에서 Custom으로 그 도메인을 Allowed domains에 추가).
 
 ## 데이터
 - 원본: 구글시트 `1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU`, gid `1768099903` (남의 시트, 더 이상 갱신 안 됨)
