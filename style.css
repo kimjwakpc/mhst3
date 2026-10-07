@@ -259,5 +259,4 @@ table.ref th, table.ref td { padding: 6px 4px; border-bottom: 1px solid var(--li
 table.ref th:first-child, table.ref td:first-child { text-align: left; color: var(--ink-3); font-size: 12px; font-weight: 700; }
 .ref-scroll { overflow-x: auto; }
 
-.foot { text-align: center; font-size: 12px; color: var(--ink-3); padding: 8px var(--gutter) 28px; }
 body.lock { overflow: hidden; }

@@ -5,7 +5,6 @@
  */
 'use strict';
 
-const ORIGIN_URL = 'https://docs.google.com/spreadsheets/d/1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU/edit?gid=1768099903';
 const DATA_URL = 'data/monsters.csv';
 const ENEMY_URL = 'data/enemies.csv';
 const OLD_CACHE_KEY = 'mhst3.sheetCache.v1'; // 예전 시트 연동 시절 캐시 — 지우기만 함
@@ -459,8 +458,7 @@ function renderRef() {
       <p>지역 랭크 보너스: ${REF.regionBonus.grades.map((g, i) => `${g}랭크 ${REF.regionBonus.values[i]}`).join(' · ')}</p></div>
     <div class="ref-card"><h3>회심률 (%)</h3>${t(REF.crit)}</div>
     <div class="ref-card"><h3>스피드</h3>${t(REF.speed)}</div>
-    <div class="ref-card"><h3>등급 총합</h3><p>체력 + 공격력 + 방어력 + 회심 + 스피드 + 스테 회복 + 초기 스테 등급의 합입니다. 파룡력은 등급이 아닌 고정 수치입니다.</p></div>
-    <div class="ref-card"><h3>데이터 출처</h3><p>동료몬·적 몬스터 정보는 <a href="${ORIGIN_URL}" target="_blank" rel="noopener">즈3 몬스터 수치</a> 구글시트에서 가져온 자료를 바탕으로 합니다.</p></div>`;
+    <div class="ref-card"><h3>등급 총합</h3><p>체력 + 공격력 + 방어력 + 회심 + 스피드 + 스테 회복 + 초기 스테 등급의 합입니다. 파룡력은 등급이 아닌 고정 수치입니다.</p></div>`;
 }
 
 /* ── 이벤트 ────────────────────────────────────────────── */
@@ -471,7 +469,6 @@ function switchTab(name) {
 }
 
 function bind() {
-  $('#srcLink').href = ORIGIN_URL;
   document.querySelector('.tabs').addEventListener('click', e => {
     const b = e.target.closest('button[data-tab]'); if (b) switchTab(b.dataset.tab);
   });

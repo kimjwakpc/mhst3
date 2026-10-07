@@ -14,6 +14,7 @@
   - `동료몬 스테이터스` gid `1768099903` → `data/monsters.csv` (몬스터가 동료일 때 정보)
   - `몬스터 스테이터스` gid `1878979010` → `data/enemies.csv` (몬스터가 적일 때 정보; `몬스터 스테이터스의 사본` 탭은 내용 동일)
   - 그 밖의 탭: 건의사항 작성칸, 시트16, 시트9, 기술 테이블, 검색 (아직 안 가져옴)
+- 사이트·README에 원본 시트 출처 표기를 하지 않는다 (사용자 요청).
 - 사이트는 **`data/*.csv`만 읽는다. 구글시트와 연동하지 않음** (사용자 요청). 실시간 연동을 다시 넣지 말 것.
 - 수치 수정은 CSV를 직접 고치고 `python3 tools/check_data.py`로 검산 (두 파일 모두 검사).
 - 시트에서 다시 받을 땐 `https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<gid>` (docs.google.com, *.googleusercontent.com 허용 필요).

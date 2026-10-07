@@ -3,7 +3,6 @@
 몬스터헌터 스토리즈3 동료몬 수치와 적 몬스터 정보를 폰에서 보기 위한 정적 웹사이트.
 
 - 사이트: https://kimjwakpc.github.io/mhst3/
-- 원본 자료: [즈3 몬스터 수치 (구글시트)](https://docs.google.com/spreadsheets/d/1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU/edit?gid=1768099903)
 
 ## 기능
 - **동료몬**: 이름·S기술·패시브·부화기술 검색, 속성/타입/랭크/이동/부화그룹 필터, 수치별 정렬
@@ -14,11 +13,10 @@
 - 폰에서 "홈 화면에 추가"하면 앱처럼 사용 가능, 라이트/다크 모드 자동
 
 ## 데이터
-원본 구글시트(더 이상 갱신되지 않음)에서 한 번 가져온 자료를 사이트에 포함했다.
-- `동료몬 스테이터스` 탭 → `data/monsters.csv`
-- `몬스터 스테이터스` 탭 → `data/enemies.csv`
+- 동료몬 → `data/monsters.csv`
+- 적 몬스터 → `data/enemies.csv`
 
-사이트는 이 파일들만 읽으며 구글시트와는 연동하지 않는다. 수치를 고칠 땐 CSV를 직접 수정하고 `python3 tools/check_data.py`로 검산한다.
+사이트는 이 파일들만 읽는다. 수치를 고칠 땐 CSV를 직접 수정하고 `python3 tools/check_data.py`로 검산한다.
 
 ## 파일
 | 파일 | 역할 |
