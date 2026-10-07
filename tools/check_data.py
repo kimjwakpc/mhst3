@@ -1,4 +1,4 @@
-"""시트 스냅샷(data/sheet_snapshot.csv) 무결성 검사.
+"""몬스터 자료(data/monsters.csv) 무결성 검사.
 
 - 총합 = 체력+공격력+방어력+회심+스피드+스테회복+초기스테 (등급 합)
 - 각 '총합 X' = 기본 + 보너스
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "sheet_snapshot.csv"
+path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "monsters.csv"
 
 # 빙고 보너스 표 (시트 상단)
 BINGO = {

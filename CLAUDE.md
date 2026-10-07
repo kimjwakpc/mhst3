@@ -8,12 +8,11 @@
 - 주 사용 환경은 **폰**. 모든 UI 변경은 390px 폭에서 가로 스크롤 없는지 확인.
 
 ## 데이터
-- 원본: 구글시트 `1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU`, gid `1768099903` (시트 소유자는 사용자가 아님 — 읽기 전용)
-- 사이트는 브라우저에서 시트 CSV를 실시간으로 읽고, 실패 시 `data/sheet_snapshot.csv` 사용.
-- 열 위치는 `app.js`의 `C` 객체(0부터)에 고정. 시트 열 구성이 바뀌면 여기와 `tools/check_data.py`를 같이 고칠 것.
+- 원본: 구글시트 `1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU`, gid `1768099903` (남의 시트, 더 이상 갱신 안 됨)
+- 사이트는 **`data/monsters.csv`만 읽는다. 구글시트와 연동하지 않음** (사용자 요청). 실시간 연동을 다시 넣지 말 것.
+- 수치 수정은 `data/monsters.csv`를 직접 고치고 `python3 tools/check_data.py`로 검산.
+- 열 위치는 `app.js`의 `C` 객체(0부터)에 고정. CSV 열 구성을 바꾸면 여기와 `tools/check_data.py`를 같이 고칠 것.
   - 중복 헤더명(초기 스테, 스테 회복, 스피드, 보너스)이 있어서 이름이 아닌 **열 번호**로 읽는다.
-- 저장본 갱신: `python3 tools/update_snapshot.py` → 자동으로 `tools/check_data.py` 검산까지.
-- docs.google.com 접속이 막힌 환경이면 우회하지 말고 막혔다고 알릴 것.
 
 ## 수치 규칙 (check_data.py로 검증됨)
 - 등급 총합 = 체력+공격력+방어력+회심+스피드+스테회복+초기스테 등급
@@ -22,6 +21,6 @@
 - 파룡력 기본값은 등급 환산이 아니라 몬스터별 고정 수치
 
 ## 할 일 후보
-- 시트의 다른 탭(있다면) 추가
+- 원본 시트의 다른 탭(있다면) 자료 추가
 - 부화기술 헤더 위 숫자(5~10)의 의미 확인 후 표시
 - 서비스워커로 오프라인 지원

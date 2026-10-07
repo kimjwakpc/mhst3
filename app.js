@@ -1,17 +1,11 @@
-/* 즈3 몬스터 도감 — 구글시트 CSV를 읽어 화면에 그린다.
- * 데이터 우선순위: ① 시트 실시간 → ② 마지막으로 받은 시트(브라우저 캐시) → ③ 저장본(data/sheet_snapshot.csv)
+/* 즈3 몬스터 도감 — 사이트에 포함된 data/monsters.csv를 읽어 화면에 그린다.
+ * (원본 구글시트에서 한 번 가져온 고정 자료. 시트와 연동하지 않음)
  */
 'use strict';
 
-const SHEET_ID = '1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU';
-const GID = '1768099903';
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${GID}#gid=${GID}`;
-const LIVE_URLS = [
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`,
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&gid=${GID}`,
-];
-const SNAPSHOT_URL = 'data/sheet_snapshot.csv';
-const CACHE_KEY = 'mhst3.sheetCache.v1';
+const ORIGIN_URL = 'https://docs.google.com/spreadsheets/d/1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU/edit?gid=1768099903';
+const DATA_URL = 'data/monsters.csv';
+const OLD_CACHE_KEY = 'mhst3.sheetCache.v1'; // 예전 시트 연동 시절 캐시 — 지우기만 함
 const CMP_KEY = 'mhst3.compare.v1';
 const SORT_KEY = 'mhst3.sort.v1';
 const CMP_MAX = 4;
@@ -65,7 +59,6 @@ const SORTS = {
 /* ── 상태 ──────────────────────────────────────────────── */
 const state = {
   monsters: [],
-  source: '',
   q: '',
   sort: 'no',
   desc: false,
@@ -139,16 +132,6 @@ function parseMonsters(text) {
 }
 
 /* ── 데이터 불러오기 ───────────────────────────────────── */
-function setSource(kind, text) {
-  const b = $('#sourceBtn');
-  b.className = 'source ' + (kind === 'live' ? 'live' : 'snap');
-  b.textContent = text;
-}
-function fmtTime(ts) {
-  const d = new Date(ts);
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
 function apply(monsters) {
   state.monsters = monsters;
   renderFilters();
@@ -157,50 +140,16 @@ function apply(monsters) {
   routeFromHash();
 }
 
-async function fetchText(url, ms = 9000) {
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), ms);
-  try {
-    const res = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.text();
-  } finally { clearTimeout(timer); }
-}
-
 async function load() {
-  // 1) 캐시 또는 저장본으로 즉시 표시
-  const cache = store.get(CACHE_KEY, null);
-  let shown = false;
-  if (cache?.text) {
-    try { apply(parseMonsters(cache.text)); setSource('snap', `캐시 · ${fmtTime(cache.at)}`); shown = true; } catch { /* 무시 */ }
+  try { localStorage.removeItem(OLD_CACHE_KEY); } catch { /* 저장 불가 환경 무시 */ }
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    apply(parseMonsters(await res.text()));
+  } catch (e) {
+    console.warn('데이터 불러오기 실패', e);
+    $('#list').innerHTML = '<li class="empty">데이터를 불러오지 못했습니다.</li>';
   }
-  if (!shown) {
-    try {
-      apply(parseMonsters(await fetchText(SNAPSHOT_URL)));
-      setSource('snap', '저장본'); shown = true;
-    } catch (e) { console.warn('저장본 실패', e); }
-  }
-  // 2) 시트 실시간
-  await refreshLive(shown);
-}
-
-async function refreshLive(hadData) {
-  const b = $('#sourceBtn');
-  const prev = b.textContent;
-  b.textContent = '시트 확인 중…';
-  for (const url of LIVE_URLS) {
-    try {
-      const text = await fetchText(url);
-      const ms = parseMonsters(text);
-      apply(ms);
-      const at = Date.now();
-      store.set(CACHE_KEY, { text, at });
-      setSource('live', `시트 실시간 · ${fmtTime(at)}`);
-      return;
-    } catch (e) { console.warn('실시간 실패', url, e); }
-  }
-  if (hadData) b.textContent = prev;
-  else { setSource('snap', '불러오기 실패'); $('#list').innerHTML = '<li class="empty">데이터를 불러오지 못했습니다.</li>'; }
 }
 
 /* ── 필터 ──────────────────────────────────────────────── */
@@ -422,7 +371,7 @@ function renderRef() {
     <div class="ref-card"><h3>회심률 (%)</h3>${t(REF.crit)}</div>
     <div class="ref-card"><h3>스피드</h3>${t(REF.speed)}</div>
     <div class="ref-card"><h3>등급 총합</h3><p>체력 + 공격력 + 방어력 + 회심 + 스피드 + 스테 회복 + 초기 스테 등급의 합입니다. 파룡력은 등급이 아닌 고정 수치입니다.</p></div>
-    <div class="ref-card"><h3>데이터 출처</h3><p>모든 수치는 <a href="${SHEET_URL}" target="_blank" rel="noopener">즈3 몬스터 수치</a> 구글시트 기준이며, 시트를 고치면 이 사이트도 다음에 열 때 반영됩니다. 잘못된 정보는 시트의 건의사항 칸으로 제보해 주세요.</p></div>`;
+    <div class="ref-card"><h3>데이터 출처</h3><p>수치는 <a href="${ORIGIN_URL}" target="_blank" rel="noopener">즈3 몬스터 수치</a> 구글시트에서 가져온 자료를 바탕으로 합니다.</p></div>`;
 }
 
 /* ── 이벤트 ────────────────────────────────────────────── */
@@ -433,7 +382,7 @@ function switchTab(name) {
 }
 
 function bind() {
-  $('#srcLink').href = SHEET_URL;
+  $('#srcLink').href = ORIGIN_URL;
   document.querySelector('.tabs').addEventListener('click', e => {
     const b = e.target.closest('button[data-tab]'); if (b) switchTab(b.dataset.tab);
   });
@@ -469,7 +418,6 @@ function bind() {
     }
   });
   $('#compare').addEventListener('click', e => { const b = e.target.closest('[data-cmp]'); if (b) toggleCompare(b.dataset.cmp); });
-  $('#sourceBtn').addEventListener('click', () => refreshLive(true));
   window.addEventListener('hashchange', routeFromHash);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeDetail(); });
 }
