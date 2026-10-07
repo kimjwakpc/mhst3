@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>즈3 몬스터 도감</title>
-<meta name="description" content="몬스터헌터 스토리즈3 동료몬 수치 도감">
+<meta name="description" content="몬스터헌터 스토리즈3 동료몬 수치·적 몬스터 약점 도감">
 <meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#16140f" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -20,14 +20,15 @@
     <h1>즈3 몬스터 도감</h1>
   </div>
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="list" aria-selected="true">도감</button>
+    <button role="tab" data-tab="list" aria-selected="true">동료몬</button>
+    <button role="tab" data-tab="enemy" aria-selected="false">적 몬스터</button>
     <button role="tab" data-tab="compare" aria-selected="false">비교 <span id="cmpCount" class="count" hidden></span></button>
     <button role="tab" data-tab="ref" aria-selected="false">참고표</button>
   </nav>
 </header>
 
 <main>
-  <!-- 도감 -->
+  <!-- 동료몬 -->
   <section id="tab-list" class="tab">
     <div class="controls">
       <div class="search">
@@ -59,9 +60,22 @@
     <ul id="list" class="cards"></ul>
   </section>
 
+  <!-- 적 몬스터 -->
+  <section id="tab-enemy" class="tab" hidden>
+    <div class="controls">
+      <div class="erow">
+        <div class="search"><input id="eq" type="search" placeholder="몬스터 이름 · 속성 검색" autocomplete="off"></div>
+        <button id="efToggle" class="ghost" type="button" aria-expanded="false">필터 <span id="efCount" class="count" hidden></span></button>
+      </div>
+      <div id="efilters" class="filters" hidden></div>
+    </div>
+    <p id="eInfo" class="result-info"></p>
+    <ul id="elist" class="cards"></ul>
+  </section>
+
   <!-- 비교 -->
   <section id="tab-compare" class="tab" hidden>
-    <p class="hint">도감에서 몬스터를 열고 <b>비교에 추가</b>를 누르면 최대 4마리까지 나란히 볼 수 있습니다.</p>
+    <p class="hint">동료몬 탭에서 몬스터를 열고 <b>비교에 추가</b>를 누르면 최대 4마리까지 나란히 볼 수 있습니다.</p>
     <div id="compare"></div>
   </section>
 

@@ -1,4 +1,4 @@
-"""몬스터 자료(data/monsters.csv) 무결성 검사.
+"""자료 무결성 검사: 동료몬(data/monsters.csv) + 적 몬스터(data/enemies.csv).
 
 - 총합 = 체력+공격력+방어력+회심+스피드+스테회복+초기스테 (등급 합)
 - 각 '총합 X' = 기본 + 보너스
@@ -67,3 +67,24 @@ for r in data:
 
 print(f"몬스터 {len(data)}종 검사")
 print("\n".join(errs) if errs else "이상 없음")
+
+# ── 적 몬스터 (data/enemies.csv) ──────────────────────────
+ELEMENTS = {"무속성", "불속성", "물속성", "번개속성", "얼음속성", "용속성"}
+TYPES = {"파워", "스피드", "테크닉"}
+epath = ROOT / "data" / "enemies.csv"
+erows = list(csv.reader(epath.open(encoding="utf-8")))
+assert erows[0][0] == "몬스터 이름" and erows[0][6].startswith("공격 유형"), "적 몬스터 열 구성이 바뀜"
+edata = [r for r in erows[1:] if r and r[0].strip()]
+eerrs = []
+names = [r[0] for r in edata]
+eerrs += [f"{x}: 이름 중복" for x in sorted({x for x in names if names.count(x) > 1})]
+for r in edata:
+    if r[1] not in ELEMENTS:
+        eerrs.append(f"{r[0]}: 공격 속성 '{r[1]}'")
+    eerrs += [f"{r[0]}: 약점 속성 '{w}'" for w in (r[3], r[4]) if w and w not in ELEMENTS]
+    if r[6] not in TYPES:
+        eerrs.append(f"{r[0]}: 통상 공격 유형 '{r[6]}'")
+    eerrs += [f"{r[0]}: 공격 유형 '{t}'" for t in r[7:9] if t and t not in TYPES]
+
+print(f"적 몬스터 {len(edata)}종 검사")
+print("\n".join(eerrs) if eerrs else "이상 없음")

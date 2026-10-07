@@ -1,10 +1,13 @@
-/* 즈3 몬스터 도감 — 사이트에 포함된 data/monsters.csv를 읽어 화면에 그린다.
+/* 즈3 몬스터 도감 — 사이트에 포함된 CSV를 읽어 화면에 그린다.
+ *   data/monsters.csv : 동료몬 (원본 시트 '동료몬 스테이터스' 탭)
+ *   data/enemies.csv  : 적 몬스터 (원본 시트 '몬스터 스테이터스' 탭)
  * (원본 구글시트에서 한 번 가져온 고정 자료. 시트와 연동하지 않음)
  */
 'use strict';
 
 const ORIGIN_URL = 'https://docs.google.com/spreadsheets/d/1_OgFiA32kDbcPGc1JAtOQfj1T5HDRnwIdxXWd4oCqGU/edit?gid=1768099903';
 const DATA_URL = 'data/monsters.csv';
+const ENEMY_URL = 'data/enemies.csv';
 const OLD_CACHE_KEY = 'mhst3.sheetCache.v1'; // 예전 시트 연동 시절 캐시 — 지우기만 함
 const CMP_KEY = 'mhst3.compare.v1';
 const SORT_KEY = 'mhst3.sort.v1';
@@ -23,6 +26,12 @@ const C = {
   type: 41, el: 42, fly: 43, climb: 44, swim: 45, dig: 46,
   sSkill: 48, group: 50, hatch0: 51, passive0: 58, passiveN: 18,
 };
+/* 적 몬스터 CSV 열 위치 (0부터) */
+const E = { name: 0, el: 1, weak1: 3, weak2: 4, phase0: 6 };
+const PHASES = ['통상', '분노·특수1', '탈진·특수2'];
+/* 공격 유형 상성: 키 유형을 이기는 유형 (파워 < 스피드 < 테크닉 < 파워) */
+const COUNTER = { 파워: '스피드', 스피드: '테크닉', 테크닉: '파워' };
+
 const ELEMENTS = ['무속성', '불속성', '물속성', '번개속성', '얼음속성', '용속성'];
 const TYPES = ['파워', '스피드', '테크닉'];
 const MOVES = [['fly', '비행'], ['climb', '등반'], ['swim', '수영'], ['dig', '땅 파기']];
@@ -64,6 +73,9 @@ const state = {
   desc: false,
   f: { el: new Set(), type: new Set(), rank: new Set(), move: new Set(), group: new Set() },
   compare: [],
+  enemies: [],
+  eq: '',
+  ef: { el: new Set(), weak: new Set(), type: new Set() },
 };
 
 /* ── 유틸 ──────────────────────────────────────────────── */
@@ -131,17 +143,36 @@ function parseMonsters(text) {
   return out;
 }
 
+function parseEnemies(text) {
+  const rows = parseCSV(text.replace(/^\uFEFF/, ''));
+  const hi = rows.findIndex(r => (r[E.name] || '').trim() === '몬스터 이름');
+  if (hi < 0) throw new Error('헤더 행(몬스터 이름)을 찾지 못함');
+  if (!(rows[hi][E.phase0] || '').startsWith('공격 유형')) throw new Error('열 구성이 바뀜 (공격 유형 열 위치)');
+  const out = [];
+  for (const r of rows.slice(hi + 1)) {
+    const t = i => (r[i] || '').trim();
+    const name = t(E.name);
+    if (!name || name === '새 몬스터') continue;
+    const weak = [...new Set([t(E.weak1), t(E.weak2)].filter(Boolean))];
+    const phases = PHASES.map((label, i) => ({ label, type: t(E.phase0 + i) })).filter(p => p.type);
+    out.push({ name, el: t(E.el), weak, phases, hay: [name, t(E.el), ...weak].join(' ').toLowerCase() });
+  }
+  return out;
+}
+
 /* ── 데이터 불러오기 ───────────────────────────────────── */
 function apply(monsters) {
   state.monsters = monsters;
   renderFilters();
   renderList();
   renderCompare();
+  if (state.enemies.length) renderEList(); // '동료몬 정보 보기' 링크
   routeFromHash();
 }
 
 async function load() {
   try { localStorage.removeItem(OLD_CACHE_KEY); } catch { /* 저장 불가 환경 무시 */ }
+  loadEnemies();
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -149,6 +180,19 @@ async function load() {
   } catch (e) {
     console.warn('데이터 불러오기 실패', e);
     $('#list').innerHTML = '<li class="empty">데이터를 불러오지 못했습니다.</li>';
+  }
+}
+
+async function loadEnemies() {
+  try {
+    const res = await fetch(ENEMY_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    state.enemies = parseEnemies(await res.text());
+    renderEFilters();
+    renderEList();
+  } catch (e) {
+    console.warn('적 몬스터 불러오기 실패', e);
+    $('#elist').innerHTML = '<li class="empty">데이터를 불러오지 못했습니다.</li>';
   }
 }
 
@@ -355,12 +399,57 @@ function renderCompare() {
     <p class="note" style="margin-top:8px">주황색 = 비교 대상 중 가장 높은 값</p>`;
 }
 
+/* ── 적 몬스터 ─────────────────────────────────────────── */
+function renderEFilters() {
+  const weaks = ELEMENTS.filter(e => state.enemies.some(m => m.weak.includes(e)));
+  const chip = (key, val) =>
+    `<button class="chip" data-f="${key}" data-v="${esc(val)}" aria-pressed="${state.ef[key].has(val)}">${esc(val.replace('속성', ''))}</button>`;
+  $('#efilters').innerHTML = `
+    <div class="fgroup"><span>공격 속성</span><div class="chips">${ELEMENTS.map(e => chip('el', e)).join('')}</div></div>
+    <div class="fgroup"><span>약점 속성 (하나라도)</span><div class="chips">${weaks.map(e => chip('weak', e)).join('')}</div></div>
+    <div class="fgroup"><span>공격 유형 (어느 단계든)</span><div class="chips">${TYPES.map(t => chip('type', t)).join('')}</div></div>
+    <button class="reset" type="button" id="resetEF">필터 초기화</button>`;
+}
+function enemyCardHTML(m) {
+  const ally = state.monsters.find(a => a.name === m.name);
+  const weak = m.weak.length
+    ? m.weak.map(w => `<span class="tag el el-${esc(w)}">${esc(w.replace('속성', ''))}</span>`).join('')
+    : '<span class="none">정보 없음</span>';
+  return `<li><div class="card ecard el-${esc(m.el)}">
+    <div class="card-head">
+      <div class="name">${esc(m.name)}</div>
+      <div class="tags"><span class="tag el">공격 ${esc(m.el.replace('속성', ''))}</span></div>
+    </div>
+    <div class="eweak"><span class="lbl">약점</span>${weak}</div>
+    <div class="phases">${m.phases.map(p => `<div class="phase"><small>${esc(p.label)}</small>
+      <b class="ty-${esc(p.type)}">${esc(p.type)}</b>
+      ${COUNTER[p.type] ? `<span class="ctr">→ <b class="ty-${COUNTER[p.type]}">${COUNTER[p.type]}</b></span>` : ''}</div>`).join('')}</div>
+    ${ally ? `<button class="elink" type="button" data-ally="${ally.no}">동료몬 정보 보기 ›</button>` : ''}
+  </div></li>`;
+}
+function renderEList() {
+  const toks = state.eq.toLowerCase().split(/\s+/).filter(Boolean);
+  const f = state.ef;
+  const list = state.enemies.filter(m =>
+    (!f.el.size || f.el.has(m.el)) &&
+    (!f.weak.size || m.weak.some(w => f.weak.has(w))) &&
+    (!f.type.size || m.phases.some(p => f.type.has(p.type))) &&
+    toks.every(t => m.hay.includes(t)));
+  $('#elist').innerHTML = list.length ? list.map(enemyCardHTML).join('') : '<li class="empty">조건에 맞는 몬스터가 없습니다.</li>';
+  const n = Object.values(f).reduce((a, s) => a + s.size, 0);
+  $('#efCount').hidden = !n; $('#efCount').textContent = n;
+  $('#eInfo').textContent = `${list.length} / ${state.enemies.length}종 · → 뒤는 그 공격을 이기는 유형`;
+}
+
 /* ── 참고표 ────────────────────────────────────────────── */
 function renderRef() {
   const t = r => `<div class="ref-scroll"><table class="ref"><tr><th>등급</th>${r.grades.map(g => `<td>${g}</td>`).join('')}</tr>
     <tr><th>실제 수치</th>${r.values.map(v => `<td><b>${v}</b></td>`).join('')}</tr></table></div>`;
   const b = REF.bingo;
   $('#ref').innerHTML = `
+    <div class="ref-card"><h3>공격 유형 상성</h3>
+      <p><b class="ty-파워">파워</b>는 <b class="ty-스피드">스피드</b>에, <b class="ty-스피드">스피드</b>는 <b class="ty-테크닉">테크닉</b>에, <b class="ty-테크닉">테크닉</b>은 <b class="ty-파워">파워</b>에 집니다.
+      적 몬스터 탭의 → 뒤에 적힌 유형으로 공격하면 정면 승부에서 이깁니다.</p></div>
     <div class="ref-card"><h3>빙고 보너스</h3>
       <div class="ref-scroll"><table class="ref"><tr><th></th>${b.cols.map(c => `<td><b>${c}</b></td>`).join('')}</tr>
       ${b.rows.map(r => `<tr><th>${r[0]}</th>${r.slice(1).map(v => `<td>+${v}</td>`).join('')}</tr>`).join('')}</table></div>
@@ -371,7 +460,7 @@ function renderRef() {
     <div class="ref-card"><h3>회심률 (%)</h3>${t(REF.crit)}</div>
     <div class="ref-card"><h3>스피드</h3>${t(REF.speed)}</div>
     <div class="ref-card"><h3>등급 총합</h3><p>체력 + 공격력 + 방어력 + 회심 + 스피드 + 스테 회복 + 초기 스테 등급의 합입니다. 파룡력은 등급이 아닌 고정 수치입니다.</p></div>
-    <div class="ref-card"><h3>데이터 출처</h3><p>수치는 <a href="${ORIGIN_URL}" target="_blank" rel="noopener">즈3 몬스터 수치</a> 구글시트에서 가져온 자료를 바탕으로 합니다.</p></div>`;
+    <div class="ref-card"><h3>데이터 출처</h3><p>동료몬·적 몬스터 정보는 <a href="${ORIGIN_URL}" target="_blank" rel="noopener">즈3 몬스터 수치</a> 구글시트에서 가져온 자료를 바탕으로 합니다.</p></div>`;
 }
 
 /* ── 이벤트 ────────────────────────────────────────────── */
@@ -417,6 +506,20 @@ function bind() {
       closeDetail(); switchTab('list'); renderList();
     }
   });
+  let eqt;
+  $('#eq').addEventListener('input', e => { clearTimeout(eqt); eqt = setTimeout(() => { state.eq = e.target.value.trim(); renderEList(); }, 120); });
+  $('#efToggle').addEventListener('click', e => {
+    const f = $('#efilters'); f.hidden = !f.hidden; e.currentTarget.setAttribute('aria-expanded', String(!f.hidden));
+  });
+  $('#efilters').addEventListener('click', e => {
+    if (e.target.id === 'resetEF') { Object.values(state.ef).forEach(s => s.clear()); renderEFilters(); renderEList(); return; }
+    const c = e.target.closest('.chip'); if (!c) return;
+    const set = state.ef[c.dataset.f]; const v = c.dataset.v;
+    set.has(v) ? set.delete(v) : set.add(v);
+    c.setAttribute('aria-pressed', String(set.has(v)));
+    renderEList();
+  });
+  $('#elist').addEventListener('click', e => { const b = e.target.closest('[data-ally]'); if (b) openDetail(+b.dataset.ally); });
   $('#compare').addEventListener('click', e => { const b = e.target.closest('[data-cmp]'); if (b) toggleCompare(b.dataset.cmp); });
   window.addEventListener('hashchange', routeFromHash);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeDetail(); });
